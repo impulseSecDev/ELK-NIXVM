@@ -1,6 +1,6 @@
-# Edit this configuration file to define what should be installed on
-# your system. Help is available in the configuration.nix(5) man page, on
-# https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
+###############################################################################
+# Configuration.nix
+###############################################################################
 
 { config, lib, pkgs, ... }:
 
@@ -12,29 +12,46 @@
       ./fluentbit.nix
       ./wireguard.nix
       ./wazuh-agent.nix
+      ./nginx.nix
     ];
+
+  sops.secrets."user_password" = {
+    neededForUsers = true;
+  };
+
+  sops = {
+    defaultSopsFile = ./secrets/secrets.yaml;
+    age.keyFile = "/home/tim/.config/sops/age/keys.txt";
+  };
+
+  nix.settings = {
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
+  };
 
   # Use the GRUB 2 boot loader.
   boot.loader.grub.enable = true;
-   boot.loader.grub.efiSupport = true;
-  # boot.loader.grub.efiInstallAsRemovable = true;
-  #boot.loader.efi.efiSysMountPoint = "/boot/efi";
+  boot.loader.grub.efiSupport = true;
   # Define on which hard drive you want to install Grub.
-   boot.loader.grub.device = "nodev"; # or "nodev" for efi only
+  boot.loader.grub.device = "nodev"; # or "nodev" for efi only
 
-   networking.hostName = "ELKbox"; # Define your hostname.
+  networking.hostName = "ELKbox"; # Define your hostname.
 
   # Configure network connections interactively with nmcli or nmtui.
   networking.networkmanager.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
-   users.users.tim = {
-     isNormalUser = true;
-     initialPassword = "password";
-     extraGroups = [ "wheel" "docker" ]; # Enable ‘sudo’ for the user.
-     packages = with pkgs; [
-       btop
-     ];
+  users.users.tim = {
+    isNormalUser = true;
+    hashedPasswordFile = config.sops.secrets."user_password".path;
+    extraGroups = [ "wheel" "docker" ]; # Enable ‘sudo’ for the user.
+    packages = with pkgs; [
+      btop
+      sops
+      tmux
+    ];
    };
 
    nixpkgs.config.allowUnfree = true;
@@ -80,6 +97,10 @@
      defaultGateway = "192.168.122.1";
      nameservers = [ "1.1.1.1" "8.8.8.8" ];
    };
+
+  environment.shellAliases = {
+    sops-edit = "sudo SOPS_AGE_KEY_FILE=/home/tim/.config/sops/age/keys.txt sops";
+  };
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ];

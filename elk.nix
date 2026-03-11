@@ -22,8 +22,9 @@
         environmentFiles = [ /etc/secrets/elastic.env ];
         environment = {
           "ELASTICSEARCH_HOSTS" = "http://127.0.0.1:9200";
-          "SERVER_HOST" = "100.64.0.3";
+          "SERVER_HOST" = "127.0.0.1";
 	  "XPACK_SECURITY_ENABLED" = "true";
+	   "SERVER_PUBLICBASEURL" = "https://elkbox.mesh.loranjennings.com";
         };
         extraOptions = [ "--network=host" ];
       };
