@@ -1,126 +1,93 @@
-# WAZUH-NIXVM
+# ELK VM
 
-**Wazuh security monitoring manager running on NixOS via Docker.**
+> Centralized SIEM core for the homelab security stack. Runs Elasticsearch, Kibana, and Fluent Bit on NixOS — fully declarative, reproducible, and version-controlled.
 
-Wazuh 4.14.3 manager declared as an OCI container in NixOS configuration. Receives security events from agents on all hosts, performs log analysis, file integrity monitoring, and rootkit detection, and forwards alerts to Elasticsearch on the ELK VM. Part of a broader security monitoring infrastructure — see [homelab-security-stack](https://github.com/impulseSecDev/homelab-security-stack) for full architecture.
+Part of the [Homelab Security Stack](../README.md).
 
 ---
 
-## What This VM Does
+## Overview
 
-- Runs Wazuh manager 4.14.3 for host-based intrusion detection across all hosts
-- Receives security events from agents on the daily driver, ELK VM, and VPS
-- Performs log analysis, FIM, rootkit detection, and vulnerability assessment
-- Forwards alerts to Elasticsearch on the ELK VM via internal Filebeat
-- Runs Fluent Bit to ship its own system logs to Elasticsearch over Tailscale
-- Connects to the VPS agent over a WireGuard tunnel
+The ELK VM is the log aggregation and analysis hub for the homelab. All hosts ship structured logs via Fluent Bit over a dedicated WireGuard log shipping channel. Logs are indexed in Elasticsearch and visualized through Kibana with KQL queries and custom dashboards.
+
+The entire VM state is declared in NixOS configuration. Elasticsearch and Kibana run as Docker containers via `virtualisation.oci-containers` — managed by systemd, fully reproducible despite running in containers.
 
 ---
 
 ## Stack
 
-| Component | Version | Method |
+| Component | Version | Purpose |
 |---|---|---|
-| Wazuh Manager | 4.14.3 | Docker via `virtualisation.oci-containers` |
-| Fluent Bit | 4.x | Native NixOS module |
-| WireGuard | - | Native NixOS module |
+| Elasticsearch | 8.13.0 | Log storage, indexing, KQL search |
+| Kibana | 8.13.0 | Dashboards, visualizations, alerting |
+| Fluent Bit | 4.x | Structured log ingestion, local log shipping |
+| Nginx | — | HTTPS reverse proxy, Tailscale-only access |
+| Wazuh Agent | 4.14.3 | Host monitoring, FIM, alert shipping to Wazuh VM |
+| sops-nix | — | Encrypted secrets management |
 
 ---
 
-## Agent Connections
+## Architecture
 
-| Agent | Host | Connection Method |
-|---|---|---|
-| dailyDriver | NixOS daily driver | Tailscale |
-| elkVM | ELK VM | Tailscale |
-| headscalevps | Ubuntu VPS | WireGuard tunnel (10.10.10.3:1514) |
+### Log Ingestion
 
----
-
-## Wazuh Ports
-
-| Port | Protocol | Purpose |
-|---|---|---|
-| 1514 | TCP | Agent communication |
-| 1515 | TCP | Agent enrollment |
-| 55000 | TCP | Wazuh API |
-
-Ports 1514, 1515, and 55000 are open on the WireGuard interface only for the VPS agent. Local agents connect over Tailscale which is trusted by the NixOS firewall without explicit rules.
-
----
-
-## Modules
-
-| File | Purpose |
-|---|---|
-| `configuration.nix` | Wazuh manager container, Docker, base system config |
-| `wireguard.nix` | WireGuard client — outbound tunnel to VPS on port 62091 |
-| `fluent-bit.nix` | Fluent Bit — ships local systemd journal to ELK VM over Tailscale |
-| `wazuh-agent.nix` | Wazuh agent container template — used on NixOS agent hosts |
-
----
-
-## Secrets
-
-Secrets stored in `/etc/secrets/` — not committed to this repository.
-
-| File | Contents |
-|---|---|
-| `/etc/secrets/wazuh.env` | Elasticsearch indexer URL, credentials, API credentials |
-| `/etc/secrets/wazuh-authd.pass` | Agent enrollment password |
-| `/etc/secrets/elastic.env` | Fluent Bit Elasticsearch credentials |
-| `/etc/secrets/wg-wazuh-private` | WireGuard private key |
-| `/etc/secrets/wg-endpoint` | VPS public IP and WireGuard port |
-
----
-
-## WireGuard Tunnel
-
-This VM shares the same WireGuard interface on the VPS as the ELK VM, using a different peer IP on the same subnet.
+All homelab hosts run Fluent Bit and ship logs to Elasticsearch over a dedicated WireGuard interface (`wg0`) — deliberately separated from admin traffic. Each host tags its logs with a unique `logstash_prefix` so indices are cleanly separated per host in Elasticsearch.
 
 ```
-Wazuh VM (10.10.10.3) ──── WireGuard ──── VPS (10.10.10.1)
-          outbound connection, no inbound ports required
+Daily Driver  ─┐
+Wazuh VM      ─┤  WireGuard wg0 (log shipping only)  →  Fluent Bit  →  Elasticsearch
+Vaultwarden   ─┤
+Laptop        ─┘
+ELK VM        ──  localhost  →  Fluent Bit  →  Elasticsearch
 ```
 
-The VPS Wazuh agent connects back to this VM at `10.10.10.3:1514` for event shipping and `10.10.10.3:1515` for enrollment.
+### Access
+
+Kibana is accessible exclusively over the Tailscale mesh — Nginx terminates TLS on the Tailscale interface. Not reachable from the public internet.
+
+```
+Tailnet member → Tailscale → ELK VM Nginx (HTTPS) → Kibana
+```
+
+### TLS
+
+Wildcard certificate for `*.mesh.mydomain.com` provisioned automatically via the NixOS `security.acme` module using Cloudflare DNS-01 challenge validation. No manual certificate management.
+
+### Secrets
+
+All credentials (Elasticsearch username, password) are managed via sops-nix — encrypted at rest in version control, decrypted at activation time using a host-specific age key. Fluent Bit receives credentials via a sops-managed config template rendered to `/run/secrets/fluent-bit.conf` at runtime. No credentials are hardcoded in any configuration file.
 
 ---
 
-## Persistent Data
-
-Wazuh state, configuration, logs, and alerts are stored on the host and mounted into the container:
+## NixOS Module Structure
 
 ```
-/var/lib/wazuh/ossec/
-├── api/configuration/   # Wazuh API config
-├── etc/                 # ossec.conf, client.keys, authd.pass
-├── logs/                # ossec.log, alerts/alerts.json
-├── queue/               # Agent message queues
-├── var/multigroups/     # Agent group assignments
-├── integrations/        # Integration scripts
-├── active-response/bin/ # Active response scripts
-├── agentless/           # Agentless monitoring
-└── wodles/              # Wazuh modules
+nixos/
+├── configuration.nix     # Entry point, imports all modules
+├── hardware-configuration.nix
+├── flake.nix
+├── elasticsearch.nix     # Elasticsearch + Kibana oci-containers
+├── fluent-bit.nix        # Fluent Bit with sops template
+├── nginx.nix             # HTTPS reverse proxy for Kibana
+├── wireguard.nix         # wg0 log shipping tunnel
+├── sops.nix              # sops-nix configuration
+└── secrets/
+    └── secrets.yaml      # sops-encrypted secrets (safe to commit)
 ```
 
 ---
 
-## Problems Encountered
+## Defense in Depth
 
-### Wazuh authd rejecting enrollment requests
+- Kibana not exposed publicly — Tailscale-only access
+- Elasticsearch bound to localhost — not reachable outside the VM directly
+- Log shipping over encrypted WireGuard tunnel — VPS relay cannot read contents
+- Wazuh agent monitors the VM itself — FIM on config files, rootkit detection
+- TLS on all external-facing interfaces via automated Let's Encrypt certificates
+- sops-nix encrypted secrets — no plaintext credentials in version control
 
-**Problem:** `wazuh-authd` rejected all enrollment requests with `Invalid request for new agent` even after creating the `authd.pass` file.
+---
 
-**Solution:** The `<auth>` section of `ossec.conf` must explicitly contain `<use_password>yes</use_password>`. Without this the manager ignores the password file entirely. The config was copied from the running container, modified, and persisted via the existing volume mount.
+## Tech Stack
 
-### VPS agent firewall blocking
-
-**Problem:** VPS Wazuh agent could not reach the enrollment service at `10.10.10.3:1515` despite the WireGuard tunnel being up.
-
-**Solution:** Added explicit firewall rules for the WireGuard interface in NixOS configuration:
-```nix
-networking.firewall.interfaces."wg0".allowedTCPPorts = [ 1514 1515 55000 ];
-```
-Unlike Tailscale which is trusted by default, the WireGuard interface requires explicit firewall rules since NixOS treats it as an untrusted interface.
-
+`NixOS` `Elasticsearch` `Kibana` `Fluent Bit` `WireGuard` `Tailscale` `Nginx` `Docker` `sops-nix` `ACME / Let's Encrypt` `Cloudflare DNS-01` `KQL` `SIEM` `Log aggregation` `Declarative infrastructure`
