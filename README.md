@@ -2,7 +2,7 @@
 
 > Centralized SIEM core for the homelab security stack. Runs Elasticsearch, Kibana, and Fluent Bit on NixOS — fully declarative, reproducible, and version-controlled.
 
-Part of the [Homelab Security Stack](../README.md).
+Part of the [Homelab Security Stack](https://github.com/impulseSecDev/NIX-HOMELAB-SECURITY-STACK).
 
 ---
 
