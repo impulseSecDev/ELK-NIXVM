@@ -8,6 +8,23 @@
     "elastic_user" = {};
   };
 
+  # Lua script to parse Tailscale SSH sessions from login _CMDLINE
+  environment.etc."fluent-bit/tailscale-parse.lua".text = ''
+    function parse_tailscale(tag, timestamp, record)
+      local cmdline = record["_CMDLINE"]
+      if cmdline then
+        -- Match Tailscale CGNAT IP in -h 100.x.x.x
+        local ip = string.match(cmdline, "-h%s+(100%.[%d%.]+)")
+        if ip then
+          record["tailscale_src_ip"] = ip
+          record["tailscale_ssh"]    = true
+          record["event_type"]       = "tailscale_login"
+        end
+      end
+      return 1, timestamp, record
+    end
+  '';
+
   sops.templates."fluent-bit.conf" = {
     content = ''
       [SERVICE]
@@ -28,6 +45,12 @@
           name   modify
           match  *
           remove SYSLOG_TIMESTAMP
+
+      [FILTER]
+          name    lua
+          match   *.journal
+          script  /etc/fluent-bit/tailscale-parse.lua
+          call    parse_tailscale
 
       [OUTPUT]
           name               es

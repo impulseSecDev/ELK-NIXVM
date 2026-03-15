@@ -38,14 +38,14 @@
         environment = {
           "discovery.type" = "single-node";
           "xpack.security.enabled" = "true";
-          "network.host" = "[\"127.0.0.1\", \"10.10.10.2\", \"100.64.0.3\"]";
+          "network.host" = "[ \"127.0.0.1\", \"10.10.10.2\" ]";
 	  "cluster.name" = "playbox";
         };
         extraOptions = [ "--network=host" ];
       };
       kibana = {
         image = "docker.elastic.co/kibana/kibana:8.13.0";
-        environmentFiles = [ /etc/secrets/elastic.env ];
+        environmentFiles = [ config.sops.templates."elastic.env".path ];
         environment = {
           "ELASTICSEARCH_HOSTS" = "http://127.0.0.1:9200";
           "SERVER_HOST" = "127.0.0.1";
