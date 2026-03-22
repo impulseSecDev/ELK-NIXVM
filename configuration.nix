@@ -9,10 +9,12 @@
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
       ./elk.nix
-      ./fluentbit.nix
+      ./fluent-bit.nix
       ./wireguard.nix
       ./wazuh-agent.nix
       ./nginx.nix
+      ./fail2ban.nix
+      ./suricata.nix
     ];
 
   sops.secrets."user_password" = {
@@ -60,10 +62,10 @@
 
    programs.neovim.enable = true;
 
-  # environment.systemPackages = with pkgs; [
-  #   vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-  #   wget
-  # ];
+  environment.systemPackages = with pkgs; [
+    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+    suricata
+  ];
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
@@ -98,15 +100,17 @@
      nameservers = [ "1.1.1.1" "8.8.8.8" ];
    };
 
-  environment.shellAliases = {
-    sops-edit = "sudo SOPS_AGE_KEY_FILE=/home/tim/.config/sops/age/keys.txt sops";
+  environment = {
+    shellAliases = {
+      sops-edit = "sudo SOPS_AGE_KEY_FILE=/home/tim/.config/sops/age/keys.txt sops";
+    };
+    variables = {
+      EDITOR = "nvim";
+      SUDO_EDITOR = "nvim";
+      VISUAL = "nvim";
+      SOPS_EDITOR = "vim";
+    };
   };
-
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
 
   # Copy the NixOS configuration file and link it from the resulting system
   # (/run/current-system/configuration.nix). This is useful in case you
@@ -133,4 +137,3 @@
   system.stateVersion = "25.11"; # Did you read the comment?
 
 }
-
