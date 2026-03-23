@@ -23,6 +23,8 @@ The entire VM state is declared in NixOS configuration. Elasticsearch and Kibana
 | Fluent Bit | 4.x | Structured log ingestion, local log shipping |
 | Nginx | — | HTTPS reverse proxy, Tailscale-only access |
 | Wazuh Agent | 4.14.3 | Host monitoring, FIM, alert shipping to Wazuh VM |
+| Suricata | — | IDS/IPS in NFQ mode, EVE JSON alert logging |
+| fail2ban | — | Automated banning for SSH, Kibana, and Suricata alerts |
 | sops-nix | — | Encrypted secrets management |
 
 ---
@@ -70,6 +72,8 @@ nixos/
 ├── fluent-bit.nix        # Fluent Bit with sops template
 ├── nginx.nix             # HTTPS reverse proxy for Kibana
 ├── wireguard.nix         # wg0 log shipping tunnel
+├── suricata.nix          # IDS/IPS with NFQ nftables hooks, daily rule updates
+├── fail2ban.nix          # Banning for SSH, Kibana login failures, Suricata alerts
 ├── sops.nix              # sops-nix configuration
 └── secrets/
     └── secrets.yaml      # sops-encrypted secrets (safe to commit)
@@ -82,6 +86,8 @@ nixos/
 - Kibana not exposed publicly — Tailscale-only access
 - Elasticsearch bound to localhost — not reachable outside the VM directly
 - Log shipping over encrypted WireGuard tunnel — VPS relay cannot read contents
+- Suricata running in NFQ IPS mode — inspects all non-WireGuard/Tailscale traffic, rules updated daily
+- fail2ban bans on SSH brute force, Kibana login failures, and Suricata alerts
 - Wazuh agent monitors the VM itself — FIM on config files, rootkit detection
 - TLS on all external-facing interfaces via automated Let's Encrypt certificates
 - sops-nix encrypted secrets — no plaintext credentials in version control
@@ -90,4 +96,4 @@ nixos/
 
 ## Tech Stack
 
-`NixOS` `Elasticsearch` `Kibana` `Fluent Bit` `WireGuard` `Tailscale` `Nginx` `Docker` `sops-nix` `ACME / Let's Encrypt` `Cloudflare DNS-01` `KQL` `SIEM` `Log aggregation` `Declarative infrastructure`
+`NixOS` `Elasticsearch` `Kibana` `Fluent Bit` `WireGuard` `Tailscale` `Nginx` `Docker` `Suricata` `fail2ban` `sops-nix` `ACME / Let's Encrypt` `Cloudflare DNS-01` `KQL` `SIEM` `Log aggregation` `Declarative infrastructure`
