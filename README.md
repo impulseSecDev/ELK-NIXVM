@@ -18,8 +18,8 @@ The entire VM state is declared in NixOS configuration. Elasticsearch and Kibana
 
 | Component | Version | Purpose |
 |---|---|---|
-| Elasticsearch | 8.13.0 | Log storage, indexing, KQL search |
-| Kibana | 8.13.0 | Dashboards, visualizations, alerting |
+| Elasticsearch | 9.3.2 | Log storage, indexing, KQL search |
+| Kibana | 9.3.2 | Dashboards, visualizations, alerting |
 | Fluent Bit | 4.x | Structured log ingestion, local log shipping |
 | Nginx | — | HTTPS reverse proxy, Tailscale-only access |
 | Wazuh Agent | 4.14.3 | Host monitoring, FIM, alert shipping to Wazuh VM |
