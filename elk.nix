@@ -32,7 +32,7 @@
     backend = "docker";
     containers = {
       elasticsearch = {
-        image = "docker.elastic.co/elasticsearch/elasticsearch:8.13.0";
+        image = "docker.elastic.co/elasticsearch/elasticsearch:9.3.2";
         environmentFiles = [ config.sops.templates."elastic.env".path ];
 	volumes = [ "/var/lib/elasticsearch:/usr/share/elasticsearch/data" ];
         environment = {
@@ -44,7 +44,7 @@
         extraOptions = [ "--network=host" ];
       };
       kibana = {
-        image = "docker.elastic.co/kibana/kibana:8.13.0";
+        image = "docker.elastic.co/kibana/kibana:9.3.2";
         environmentFiles = [ config.sops.templates."elastic.env".path ];
         environment = {
           "ELASTICSEARCH_HOSTS" = "http://127.0.0.1:9200";
