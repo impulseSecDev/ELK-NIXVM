@@ -70,13 +70,13 @@
 
       [INPUT]
           name              systemd
-          tag               vw.fail2ban
+          tag               elkvm.fail2ban
           systemd_filter    _SYSTEMD_UNIT=fail2ban.service
           db                /var/lib/fluent-bit/fail2ban.db
 
       [INPUT]
           name              tail
-          tag               vw.suricata.eve
+          tag               elkvm.suricata.eve
           path              /var/log/suricata/eve.json
           db                /var/lib/fluent-bit/suricata-eve.db
           mem_buf_limit     10MB
@@ -86,7 +86,7 @@
 
       [INPUT]
           name              tail
-          tag               vw.suricata.fast
+          tag               elkvm.suricata.fast
           path              /var/log/suricata/fast.log
           db                /var/lib/fluent-bit/suricata-fast.db
           mem_buf_limit     5MB
