@@ -16,6 +16,8 @@
     "wg0_dailydriver_allowedips" = {};
     "wg0_vwvm_allowedips" = {};
     "wg0_laptop_allowedips" = {};
+    "wg0_opnsense_allowedips" = {};
+    "opnsense_hostname" = {};
   };
   sops.templates."wg0.conf" = {
     content = ''
@@ -51,6 +53,13 @@
       PublicKey = P+vWLcVRat/dq01yYksYeAvXtJgxo8j7C4GV05GV+0s=
       AllowedIPs = ${config.sops.placeholder."wg0_laptop_allowedips"}
       PersistentKeepalive = 25
+
+      [Peer]
+      #Opnsense
+      PublicKey = 7MacbDK83YxiNUGOBOsvPDxX4dKPFxGABJlzN9EVMiY=
+      AllowedIPs = ${config.sops.placeholder."wg0_opnsense_allowedips"}
+      PersistentKeepalive = 25
+      Endpoint = ${config.sops.placeholder."opnsense_hostname"}
     '';
     path = "/run/secrets/wg0.conf";
     mode = "0400";
@@ -64,12 +73,11 @@
     checkReversePath = "loose";
     interfaces = {
       "wg0" = {
-        allowedTCPPorts = [ 9200 ];
+        allowedTCPPorts = [ 9200 5140 ];
       };	
       "enp1s0" = {
         allowedUDPPorts = [ 62091 ];
       };
-    };  
+    };
   };
 }
-
