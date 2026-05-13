@@ -17,6 +17,11 @@
       ./suricata.nix
     ];
 
+  swapDevices = [{
+    device = "/var/lib/swapfile";
+    size = 4 * 1024;
+  }];
+
   sops.secrets."user_password" = {
     neededForUsers = true;
   };
@@ -92,11 +97,14 @@
    networking = {
      interfaces.enp1s0 = {
        ipv4.addresses = [{
-         address = "192.168.122.231";
+         address = "10.20.30.11";
          prefixLength = 24;
        }];
      };
-     defaultGateway = "192.168.122.1";
+     defaultGateway = {
+       address = "10.20.30.1";
+       interface = "enp1s0";
+     };
      nameservers = [ "1.1.1.1" "8.8.8.8" ];
    };
 
@@ -111,6 +119,12 @@
       SOPS_EDITOR = "vim";
     };
   };
+
+  # Open ports in the firewall.
+  # networking.firewall.allowedTCPPorts = [ ];
+  # networking.firewall.allowedUDPPorts = [ ... ];
+  # Or disable the firewall altogether.
+  # networking.firewall.enable = false;
 
   # Copy the NixOS configuration file and link it from the resulting system
   # (/run/current-system/configuration.nix). This is useful in case you
@@ -135,5 +149,3 @@
   #
   # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
   system.stateVersion = "25.11"; # Did you read the comment?
-
-}
