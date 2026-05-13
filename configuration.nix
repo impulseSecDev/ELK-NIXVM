@@ -61,6 +61,8 @@
     ];
    };
 
+   nix.settings.trusted-users = [ "root" "tim" ];
+
    nixpkgs.config.allowUnfree = true;
 
    users.users.root.hashedPassword = "!";
