@@ -29,7 +29,7 @@
         # This issues a wildcard that covers *.mesh...
         domain = "*.mesh.loranjennings.com"; 
         dnsProvider = "cloudflare";
-        credentialsFile = "/var/lib/acme/secrets.env";
+        credentialFiles = "/var/lib/acme/secrets.env";
         group = "nginx";
       };
     };
