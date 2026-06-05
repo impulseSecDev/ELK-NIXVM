@@ -2,8 +2,13 @@
 
 {
   sops.secrets = {
-    "cloudflare_api_token" = {};
-    "acme_email" = {};
+    # Ensure the acme service can actually read the decrypted file
+    "cloudflare_api_token" = {
+      owner = config.users.users.acme.name;
+    };
+    "acme_email" = {
+      owner = config.users.users.acme.name;
+    };
   };
 
   sops.templates."acme.env" = {
@@ -29,7 +34,9 @@
         # This issues a wildcard that covers *.mesh...
         domain = "*.mesh.loranjennings.com"; 
         dnsProvider = "cloudflare";
-        credentialFiles = "/var/lib/acme/secrets.env";
+        credentialFiles = {
+          "CLOUDFLARE_DNS_API_TOKEN_FILE" = config.sops.secrets."cloudflare_api_token".path;
+        };
         group = "nginx";
       };
     };
