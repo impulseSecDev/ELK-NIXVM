@@ -51,7 +51,7 @@
         listen = [ { addr = "100.64.0.3"; port = 80; } ];
         extraConfig = ''
           server_name _;
-          error_page 400 =444 /;
+          error_page 400 401 402 403 404 405 429 497 500 =444 /;
           return 444;
         '';
       };
