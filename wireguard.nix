@@ -20,6 +20,8 @@
     "opnsense_hostname" = {};
     "wg0_cloud_allowedips" = {};
     "wg0_cloud_hostname" = {};
+    "wg0_mailbox_allowedips" = {};
+    "wg0_mailbox_hostname" = {};
   };
   sops.templates."wg0.conf" = {
     content = ''
@@ -67,6 +69,13 @@
       #Cloud
       PublicKey = E3UXGn7sIWOsTBCIsoLINjEiLf1bleLIocRfUZC69UM=
       AllowedIPs = ${config.sops.placeholder."wg0_cloud_allowedips"}
+      PersistentKeepalive = 25
+      Endpoint = ${config.sops.placeholder."wg0_cloud_hostname"}
+
+      [Peer]
+      #mailbox
+      PublicKey = KNKqzva2iK9/vBdYW9Qwv3i0cqrVkxI58sNOU4/1KFE=
+      AllowedIPs = ${config.sops.placeholder."wg0_mailbox_allowedips"}
       PersistentKeepalive = 25
       Endpoint = ${config.sops.placeholder."wg0_cloud_hostname"}
     '';
