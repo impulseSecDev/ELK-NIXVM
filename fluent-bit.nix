@@ -255,9 +255,7 @@
           port               9200
           http_user          ${config.sops.placeholder."elastic_user"}
           http_passwd        ${config.sops.placeholder."elastic_password"}
-          logstash_format    On
-          logstash_prefix_key es_index
-          logstash_prefix    elkvm
+          logstash_format    Off
           suppress_type_name On
           buffer_size        10MB
     '';
