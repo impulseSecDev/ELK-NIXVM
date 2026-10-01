@@ -6,21 +6,21 @@
 
 {
   imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
+    [ 
+      ./disko-config.nix
       ./elk.nix
       ./fluent-bit.nix
       ./wireguard.nix
-      ./wazuh-agent.nix
+      #./wazuh-agent.nix
       ./nginx.nix
       ./fail2ban.nix
       ./suricata.nix
     ];
 
-  swapDevices = [{
-    device = "/var/lib/swapfile";
-    size = 4 * 1024;
-  }];
+  # swapDevices = [{
+  #   device = "/var/lib/swapfile";
+  #   size = 4 * 1024;
+  # }];
 
   sops.secrets."user_password" = {
     neededForUsers = true;
@@ -28,7 +28,23 @@
 
   sops = {
     defaultSopsFile = ./secrets/secrets.yaml;
-    age.keyFile = "/home/tim/.config/sops/age/keys.txt";
+    age.keyFile = "/var/lib/sops-nix/keys.txt";
+  };
+  boot.kernelPackages = pkgs.linuxPackages; 
+  boot.supportedFilesystems = lib.mkForce [ "vfat" "fat32" "exfat" "ext4" "btrfs" ];
+
+  boot.loader.systemd-boot.enable = lib.mkForce false;
+  boot.loader.efi.canTouchEfiVariables = true;
+
+  boot.lanzaboote = {
+    enable = true;
+    pkiBundle = "/var/lib/sbctl";
+    autoGenerateKeys.enable = true;
+    autoEnrollKeys = {
+      enable = true;
+      # Automatically reboot to enroll the keys in the firmware
+      autoReboot = true;
+    };
   };
 
   nix.settings = {
@@ -37,12 +53,6 @@
       "flakes"
     ];
   };
-
-  # Use the GRUB 2 boot loader.
-  boot.loader.grub.enable = true;
-  boot.loader.grub.efiSupport = true;
-  # Define on which hard drive you want to install Grub.
-  boot.loader.grub.device = "nodev"; # or "nodev" for efi only
 
   networking.hostName = "ELKbox"; # Define your hostname.
 
@@ -74,45 +84,28 @@
     suricata
   ];
 
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
-  # programs.mtr.enable = true;
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
+  services.openssh = {
+    enable = false;
+    ports = [ 22 ];
+    settings = {
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+      PermitRootLogin = "no";
+    };
+  };
 
-  # List services that you want to enable:
+  services.tailscale = {
+    enable = true;
+  };
 
-  # Enable the OpenSSH daemon.
-   services.openssh.enable = true;
+  virtualisation.docker = {
+    enable = true;
+  };
 
-   services.tailscale = {
-     enable = true;
-   };
-
-   virtualisation.docker = {
-     enable = true;
-   };
-
-
-   networking = {
-     interfaces.enp1s0 = {
-       ipv4.addresses = [{
-         address = "10.20.30.11";
-         prefixLength = 24;
-       }];
-     };
-     defaultGateway = {
-       address = "10.20.30.1";
-       interface = "enp1s0";
-     };
-     nameservers = [ "1.1.1.1" "8.8.8.8" ];
-   };
 
   environment = {
     shellAliases = {
-      sops-edit = "sudo SOPS_AGE_KEY_FILE=/home/tim/.config/sops/age/keys.txt sops";
+      sops-edit = "/var/lib/sops-nix/keys.txt";
     };
     variables = {
       EDITOR = "nvim";
@@ -121,35 +114,5 @@
       SOPS_EDITOR = "vim";
     };
   };
-
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
-
-  # Copy the NixOS configuration file and link it from the resulting system
-  # (/run/current-system/configuration.nix). This is useful in case you
-  # accidentally delete configuration.nix.
-  # system.copySystemConfiguration = true;
-
-  # This option defines the first version of NixOS you have installed on this particular machine,
-  # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
-  #
-  # Most users should NEVER change this value after the initial install, for any reason,
-  # even if you've upgraded your system to a new NixOS release.
-  #
-  # This value does NOT affect the Nixpkgs version your packages and OS are pulled from,
-  # so changing it will NOT upgrade your system - see https://nixos.org/manual/nixos/stable/#sec-upgrading for how
-  # to actually do that.
-  #
-  # This value being lower than the current NixOS release does NOT mean your system is
-  # out of date, out of support, or vulnerable.
-  #
-  # Do NOT change this value unless you have manually inspected all the changes it would make to your configuration,
-  # and migrated your data accordingly.
-  #
-  # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
-  system.stateVersion = "25.11"; # Did you read the comment?
-
+  system.stateVersion = "26.05"; 
 }
