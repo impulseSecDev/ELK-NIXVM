@@ -8,10 +8,11 @@
   imports =
     [ 
       ./disko-config.nix
+      ./prochot.nix
       ./elk.nix
       ./fluent-bit.nix
       ./wireguard.nix
-      #./wazuh-agent.nix
+      ./wazuh-agent.nix
       ./nginx.nix
       ./fail2ban.nix
       ./suricata.nix
