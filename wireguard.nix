@@ -86,7 +86,7 @@
       "wg0" = {
         allowedTCPPorts = [ 9200 5140 ];
       };	
-      "enp1s0" = {
+      "enp0s31f6" = {
         allowedUDPPorts = [ 62091 ];
       };
     };
