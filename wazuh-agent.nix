@@ -31,9 +31,11 @@
       wazuh-agent = {
         image = "wazuh/wazuh-agent:4.14.3";
         environmentFiles = [ config.sops.templates."wazuh-agent.env".path ];
-      volumes = [
-        "/var/lib/wazuh-agent/etc:/var/ossec/etc"
-      ];
+        volumes = [
+          "wazuh-agent-etc:/var/ossec/etc"
+          "wazuh-agent-queue:/var/ossec/queue"
+          "wazuh-agent-logs:/var/ossec/logs"
+        ];
 
         extraOptions = [
           "--network=host"
