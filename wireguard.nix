@@ -21,6 +21,7 @@
     "wg0_cloud_allowedips" = {};
     "wg0_cloud_hostname" = {};
     "wg0_netbox_allowedips" = {};
+    "wg0_sprint_allowedips" = {};
   };
   sops.templates."wg0.conf" = {
     content = ''
@@ -75,6 +76,12 @@
       #Netbox
       PublicKey = QsTAt8rB/QCjZLln9xmhN13Wfar5HYFGJIEuDdE4k1U=
       AllowedIPs = ${config.sops.placeholder."wg0_netbox_allowedips"}
+      PersistentKeepalive = 25
+
+      [Peer]
+      #Sprint
+      PublicKey = 0ptDx5oRggA2ZxY9gSaufAR4HzYws9XIO0SxEj7gmRM=
+      AllowedIPs = ${config.sops.placeholder."wg0_sprint_allowedips"}
       PersistentKeepalive = 25
     '';
     path = "/run/secrets/wg0.conf";
