@@ -68,7 +68,16 @@
         Regex       ^(?<time>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}) \[(?<level>\w+)\] (?<pid>\d+)#(?<tid>\d+): (?<message>.+)$
         Time_Key    time
         Time_Format %Y/%m/%d %H:%M:%S
-  '';
+
+    [PARSER]
+        Name        syslog-rfc5424
+        Format      regex
+        Regex       ^\<(?<pri>[0-9]{1,5})\>1 (?<time>[^ ]+) (?<host>[^ ]+) (?<ident>[^ ]+) (?<pid>[-0-9]+) (?<msgid>[^ ]+) (?<extradata>(\[(.*)\]|-)) (?<message>.+)$
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep   On
+        Types       pid:integer
+      '';
 
   sops.templates."fluent-bit.conf" = {
     content = ''
@@ -132,6 +141,14 @@
           refresh_interval  5
           Parser            nginx-error
           db                /var/lib/fluent-bit/nginx-error.db
+
+      [INPUT]
+          name              syslog
+          tag               opnsense.logs
+          mode              tcp
+          listen            10.10.10.2
+          port              5140
+          Parser            syslog-rfc5424 
           
 
       [FILTER]
@@ -164,13 +181,25 @@
 
       [OUTPUT]
           name               es
-          match              *
+          match              elkvm*
           host               127.0.0.1
           port               9200
           http_user          ${config.sops.placeholder."elastic_user"}
           http_passwd        ${config.sops.placeholder."elastic_password"}
           logstash_format    Off
           Index              elkvm
+          suppress_type_name On
+          buffer_size        10MB
+
+      [OUTPUT]
+          name               es
+          match              opnsense*
+          host               127.0.0.1
+          port               9200
+          http_user          ${config.sops.placeholder."elastic_user"}
+          http_passwd        ${config.sops.placeholder."elastic_password"}
+          logstash_format    Off
+          Index              opnsense
           suppress_type_name On
           buffer_size        10MB
     '';

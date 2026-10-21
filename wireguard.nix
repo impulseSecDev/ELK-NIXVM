@@ -41,16 +41,19 @@
       # Wazuh VM
       PublicKey = na1tRGq7v+sZyAwPMJrYzI2MFq7z4Y8EKhWaMaB5ZB4=
       AllowedIPs = ${config.sops.placeholder."wg0_wazuh_allowedips"}
+      PersistentKeepalive = 25
 
       [Peer]
       # Daily Driver
       PublicKey = 51ZOUM8ant3W4DsQYkFhf642TSoH/Ct/kzTjW06p+X4=
       AllowedIPs = ${config.sops.placeholder."wg0_dailydriver_allowedips"}
+      PersistentKeepalive = 25
 
       [Peer]
       # VW VM
       PublicKey = 8hppDFIJhfCzdjbNI7xqn98JxM0Bes/ZTbsZkekPEEw=
       AllowedIPs = ${config.sops.placeholder."wg0_vwvm_allowedips"}
+      PersistentKeepalive = 25
 
       [Peer]
       # Laptop
