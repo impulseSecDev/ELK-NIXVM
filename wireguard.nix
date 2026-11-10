@@ -17,9 +17,7 @@
     "wg0_vwvm_allowedips" = {};
     "wg0_laptop_allowedips" = {};
     "wg0_opnsense_allowedips" = {};
-    "opnsense_hostname" = {};
     "wg0_cloud_allowedips" = {};
-    "wg0_cloud_hostname" = {};
     "wg0_netbox_allowedips" = {};
     "wg0_sprint_allowedips" = {};
   };
@@ -66,14 +64,12 @@
       PublicKey = 7MacbDK83YxiNUGOBOsvPDxX4dKPFxGABJlzN9EVMiY=
       AllowedIPs = ${config.sops.placeholder."wg0_opnsense_allowedips"}
       PersistentKeepalive = 25
-      Endpoint = ${config.sops.placeholder."opnsense_hostname"}
 
       [Peer]
       #Cloud
       PublicKey = E3UXGn7sIWOsTBCIsoLINjEiLf1bleLIocRfUZC69UM=
       AllowedIPs = ${config.sops.placeholder."wg0_cloud_allowedips"}
       PersistentKeepalive = 25
-      Endpoint = ${config.sops.placeholder."wg0_cloud_hostname"}
 
       [Peer]
       #Netbox
